@@ -3,88 +3,74 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vertical Family Tree</title>
+<title>Vertical Family Tree (Parents Above)</title>
 <style>
   body {
     font-family: Arial, sans-serif;
-    padding: 20px;
-    max-width: 800px;
-    margin: auto;
+    max-width: 900px;
+    margin: 20px auto;
     background: #f9f9f9;
     color: #333;
+    padding: 10px;
   }
   h1 {
     text-align: center;
   }
-  /* Container for the tree */
   #tree-container {
     display: flex;
     justify-content: center;
-    margin-top: 30px;
+    padding-top: 40px;
+    position: relative;
   }
-  /* Vertical tree wrapper */
-  .tree-vertical {
+  .generation {
     display: flex;
-    flex-direction: column;
-    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+    position: relative;
   }
-  /* Each person box */
   .person-box {
-    background: #fff;
-    border: 1px solid #007BFF;
+    background: #007BFF;
+    color: white;
     border-radius: 8px;
     padding: 10px 15px;
-    margin: 10px 0;
+    margin: 0 15px;
     min-width: 120px;
     text-align: center;
     position: relative;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   }
-  /* Buttons below each person */
-  .buttons {
+  .person-box button {
     margin-top: 8px;
-  }
-  button {
-    margin: 0 5px;
-    padding: 5px 10px;
-    font-size: 0.9em;
+    padding: 4px 8px;
+    font-size: 0.85em;
     cursor: pointer;
     border-radius: 4px;
-    border: 1px solid #007BFF;
-    background-color: #007BFF;
-    color: white;
-    transition: background-color 0.2s;
-  }
-  button:hover {
+    border: none;
     background-color: #0056b3;
+    color: white;
+    display: block;
+    width: 100%;
   }
-  /* Connector lines between generations */
-  .children-container {
-    display: flex;
-    justify-content: center;
-    margin-top: 10px;
-    position: relative;
-    padding-left: 20px;
-    padding-right: 20px;
+  .person-box button:hover {
+    background-color: #003f7f;
   }
-  /* Horizontal line connecting children boxes */
-  .children-container::before {
-    content: "";
+
+  /* Vertical connecting lines */
+  .line-down {
     position: absolute;
-    top: 0;
-    left: 10px;
-    right: 10px;
-    height: 2px;
-    background: #007BFF;
-  }
-  /* Vertical line connecting parent box to horizontal line */
-  .connector {
-    position: absolute;
-    top: -10px;
     width: 2px;
-    height: 10px;
-    background: #007BFF;
+    background-color: #007BFF;
+    top: 100%;
     left: 50%;
     transform: translateX(-50%);
+  }
+
+  /* Horizontal lines connecting siblings */
+  .line-horizontal {
+    position: absolute;
+    height: 2px;
+    background-color: #007BFF;
+    top: 0;
   }
 </style>
 </head>
@@ -93,122 +79,212 @@
   <div id="tree-container"></div>
 
 <script>
-// Person class
-class Person {
-  constructor(name) {
-    this.name = name;
-    this.parents = [];
-    this.children = [];
-  }
-}
-
-const rootPerson = new Person("You");
-const treeContainer = document.getElementById("tree-container");
-
-// Render tree vertically (parents above children)
-function renderTree() {
-  treeContainer.innerHTML = "";
-
-  function createPersonNode(person, visited = new Set()) {
-    if (visited.has(person)) {
-      // Avoid infinite loops
-      const div = document.createElement("div");
-      div.className = "person-box";
-      div.textContent = person.name + " (shown)";
-      return div;
+  class Person {
+    constructor(name) {
+      this.name = name;
+      this.parents = [];
+      this.children = [];
     }
+  }
+
+  // Start with root person "You"
+  const rootPerson = new Person("You");
+  const treeContainer = document.getElementById("tree-container");
+
+  // Collect all generations in an array, starting from root generation 0 (you)
+  function getGenerations(person, generations = [], level = 0, visited = new Set()) {
+    if (visited.has(person)) return;
     visited.add(person);
 
-    const container = document.createElement("div");
-    container.style.display = "flex";
-    container.style.flexDirection = "column";
-    container.style.alignItems = "center";
+    if (!generations[level]) generations[level] = [];
+    // Avoid duplicates in the same generation
+    if (!generations[level].includes(person)) generations[level].push(person);
 
-    // Person box
-    const personBox = document.createElement("div");
-    personBox.className = "person-box";
-    personBox.textContent = person.name;
-
-    // Buttons container
-    const buttonsDiv = document.createElement("div");
-    buttonsDiv.className = "buttons";
-
-    // Add Parent button
-    const addParentBtn = document.createElement("button");
-    addParentBtn.textContent = "Add Parent";
-    addParentBtn.onclick = () => {
-      if (person.parents.length >= 2) {
-        alert("This person already has two parents.");
-        return;
-      }
-      const parentName = prompt("Enter parent's name:");
-      if (parentName && parentName.trim()) {
-        const parent = new Person(parentName.trim());
-        person.parents.push(parent);
-        parent.children.push(person);
-        renderTree();
-      } else {
-        alert("Invalid name.");
-      }
-    };
-    buttonsDiv.appendChild(addParentBtn);
-
-    // Add Child button
-    const addChildBtn = document.createElement("button");
-    addChildBtn.textContent = "Add Child";
-    addChildBtn.onclick = () => {
-      const childName = prompt("Enter child's name:");
-      if (childName && childName.trim()) {
-        const child = new Person(childName.trim());
-        person.children.push(child);
-        child.parents.push(person);
-        renderTree();
-      } else {
-        alert("Invalid name.");
-      }
-    };
-    buttonsDiv.appendChild(addChildBtn);
-
-    personBox.appendChild(buttonsDiv);
-    container.appendChild(personBox);
-
-    // Show parents above person (names only)
-    if (person.parents.length > 0) {
-      const parentsDiv = document.createElement("div");
-      parentsDiv.style.marginBottom = "10px";
-      parentsDiv.style.fontStyle = "italic";
-      parentsDiv.textContent = "Parents: " + person.parents.map(p => p.name).join(", ");
-      container.insertBefore(parentsDiv, personBox);
+    // Parents are previous generation (level + 1)
+    for (const parent of person.parents) {
+      getGenerations(parent, generations, level + 1, visited);
     }
-
-    // Show children below person
-    if (person.children.length > 0) {
-      const childrenContainer = document.createElement("div");
-      childrenContainer.className = "children-container";
-
-      for (const child of person.children) {
-        const childNode = createPersonNode(child, visited);
-        childNode.style.margin = "0 10px";
-        childrenContainer.appendChild(childNode);
-
-        // Add vertical connector line from parent box to horizontal line
-        const connectorLine = document.createElement("div");
-        connectorLine.className = "connector";
-        childNode.style.position = "relative";
-        childNode.appendChild(connectorLine);
-      }
-      container.appendChild(childrenContainer);
-    }
-
-    return container;
   }
 
-  const rootNode = createPersonNode(rootPerson);
-  rootNode.classList.add("tree-vertical");
-  treeContainer.appendChild(rootNode);
-}
+  function renderTree() {
+    treeContainer.innerHTML = "";
+    const generations = [];
+    getGenerations(rootPerson, generations, 0);
 
-renderTree();
+    // Reverse generations so highest generation (oldest parents) at top
+    generations.reverse();
+
+    // We'll create a div per generation
+    generations.forEach((generation, genIndex) => {
+      const genDiv = document.createElement("div");
+      genDiv.className = "generation";
+      genDiv.dataset.level = genIndex;
+
+      generation.forEach(person => {
+        const personDiv = document.createElement("div");
+        personDiv.className = "person-box";
+        personDiv.textContent = person.name;
+
+        // Buttons container inside person box
+        const addParentBtn = document.createElement("button");
+        addParentBtn.textContent = "Add Parent";
+        addParentBtn.onclick = () => {
+          if (person.parents.length >= 2) {
+            alert("This person already has two parents.");
+            return;
+          }
+          const parentName = prompt("Enter parent's name:");
+          if (parentName && parentName.trim()) {
+            const parent = new Person(parentName.trim());
+            person.parents.push(parent);
+            parent.children.push(person);
+            renderTree();
+          } else {
+            alert("Invalid name.");
+          }
+        };
+        personDiv.appendChild(addParentBtn);
+
+        const addChildBtn = document.createElement("button");
+        addChildBtn.textContent = "Add Child";
+        addChildBtn.onclick = () => {
+          const childName = prompt("Enter child's name:");
+          if (childName && childName.trim()) {
+            const child = new Person(childName.trim());
+            person.children.push(child);
+            child.parents.push(person);
+            renderTree();
+          } else {
+            alert("Invalid name.");
+          }
+        };
+        personDiv.appendChild(addChildBtn);
+
+        genDiv.appendChild(personDiv);
+      });
+
+      treeContainer.appendChild(genDiv);
+    });
+
+    drawLines();
+  }
+
+  // Draw connecting lines between parents and children
+  function drawLines() {
+    // Remove old lines first
+    const oldLines = treeContainer.querySelectorAll(".line-down, .line-horizontal");
+    oldLines.forEach(line => line.remove());
+
+    const gens = [...treeContainer.querySelectorAll(".generation")];
+    for(let i=0; i < gens.length - 1; i++) {
+      const currentGen = gens[i];
+      const belowGen = gens[i+1];
+
+      // Map person names to boxes in both generations for quick lookup
+      const currentBoxes = Array.from(currentGen.children);
+      const belowBoxes = Array.from(belowGen.children);
+
+      // Create a mapping from Person name to box div
+      const currentMap = new Map();
+      currentBoxes.forEach(box => currentMap.set(box.firstChild.textContent, box));
+      const belowMap = new Map();
+      belowBoxes.forEach(box => belowMap.set(box.firstChild.textContent, box));
+
+      // For each person in belowGen, draw lines up to their parents in currentGen
+      belowBoxes.forEach(childBox => {
+        const childName = childBox.firstChild.textContent;
+
+        // Find Person object by name (we'll store references globally for simplicity)
+        const person = findPersonByName(childName, rootPerson);
+        if (!person) return;
+
+        person.parents.forEach(parent => {
+          // Find parent's box in currentGen
+          const parentBox = currentMap.get(parent.name);
+          if (!parentBox) return;
+
+          // Position calculations
+          const parentRect = parentBox.getBoundingClientRect();
+          const childRect = childBox.getBoundingClientRect();
+          const containerRect = treeContainer.getBoundingClientRect();
+
+          // Calculate line start (bottom center of parentBox relative to container)
+          const startX = parentRect.left + parentRect.width / 2 - containerRect.left;
+          const startY = parentRect.bottom - containerRect.top;
+
+          // Calculate line end (top center of childBox relative to container)
+          const endX = childRect.left + childRect.width / 2 - containerRect.left;
+          const endY = childRect.top - containerRect.top;
+
+          // Create vertical line from parent down
+          const lineDown = document.createElement("div");
+          lineDown.className = "line-down";
+          lineDown.style.left = `${startX}px`;
+          lineDown.style.top = `${startY}px`;
+          lineDown.style.height = `${endY - startY}px`;
+          treeContainer.appendChild(lineDown);
+
+          // Create horizontal line connecting parent lines if multiple parents share child
+          // We'll draw horizontal lines between parents for the same child only once per generation
+
+          // To avoid duplicates: draw a horizontal line if more than 1 parent on same generation for this child
+          if (person.parents.length > 1) {
+            // Calculate leftmost and rightmost parent positions
+            const parentsPositions = person.parents.map(p => {
+              const pBox = currentMap.get(p.name);
+              if (!pBox) return null;
+              const rect = pBox.getBoundingClientRect();
+              return rect.left + rect.width / 2 - containerRect.left;
+            }).filter(x => x !== null);
+
+            if (parentsPositions.length > 1) {
+              const leftX = Math.min(...parentsPositions);
+              const rightX = Math.max(...parentsPositions);
+
+              // Draw horizontal line at the bottom of the parent generation
+              let horLine = treeContainer.querySelector(`.hor-line-${childName}`);
+              if (!horLine) {
+                horLine = document.createElement("div");
+                horLine.className = "line-horizontal";
+                horLine.classList.add(`hor-line-${childName}`);
+                horLine.style.top = `${startY}px`;
+                horLine.style.left = `${leftX}px`;
+                horLine.style.width = `${rightX - leftX}px`;
+                treeContainer.appendChild(horLine);
+              }
+            }
+          }
+        });
+      });
+    }
+  }
+
+  // Helper: Find Person object by name (search tree)
+  function findPersonByName(name, person, visited = new Set()) {
+    if (visited.has(person)) return null;
+    visited.add(person);
+    if (person.name === name) return person;
+
+    // Search parents
+    for (const p of person.parents) {
+      const res = findPersonByName(name, p, visited);
+      if (res) return res;
+    }
+    // Search children
+    for (const c of person.children) {
+      const res = findPersonByName(name, c, visited);
+      if (res) return res;
+    }
+    return null;
+  }
+
+  // Initial render
+  renderTree();
+
+  // Re-draw lines on window resize (to adjust positions)
+  window.addEventListener("resize", () => {
+    drawLines();
+  });
 </script>
 </body>
 </html>
