@@ -3,13 +3,172 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Interactive Family Tree</title>
-<link rel="stylesheet" href="style.css" />
+<title>Family Tree App</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+    background: #f9f9f9;
+    color: #333;
+  }
+  h1 {
+    text-align: center;
+  }
+  ul.tree {
+    list-style-type: none;
+    padding-left: 20px;
+    border-left: 2px solid #ccc;
+  }
+  ul.tree ul.tree {
+    margin-left: 20px;
+    border-left: 2px solid #999;
+  }
+  .person {
+    margin: 10px 0;
+    padding: 5px 10px;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    background: #fff;
+    position: relative;
+  }
+  .person:hover {
+    background-color: #e6f0ff;
+  }
+  .buttons {
+    margin-top: 6px;
+  }
+  button {
+    margin-right: 6px;
+    padding: 4px 8px;
+    font-size: 0.9em;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid #007BFF;
+    background-color: #007BFF;
+    color: white;
+    transition: background-color 0.2s;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+</style>
 </head>
 <body>
   <h1>My Family Tree</h1>
   <div id="tree-container"></div>
 
-  <script src="script.js"></script>
+<script>
+// Person class
+class Person {
+  constructor(name) {
+    this.name = name;
+    this.parents = [];
+    this.children = [];
+  }
+}
+
+// The root person ("You")
+const rootPerson = new Person("You");
+
+// Get the container div
+const treeContainer = document.getElementById("tree-container");
+
+// Function to render the family tree
+function renderTree() {
+  // Clear container
+  treeContainer.innerHTML = "";
+
+  // Helper function to create person element recursively
+  function createPersonElement(person, visited = new Set()) {
+    // Detect circular references to prevent infinite loops
+    if (visited.has(person)) {
+      const li = document.createElement("li");
+      li.textContent = person.name + " (already shown)";
+      return li;
+    }
+    visited.add(person);
+
+    const li = document.createElement("li");
+    li.className = "person";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = person.name;
+    li.appendChild(nameSpan);
+
+    const buttonsDiv = document.createElement("div");
+    buttonsDiv.className = "buttons";
+
+    // Add Parent button
+    const addParentBtn = document.createElement("button");
+    addParentBtn.textContent = "Add Parent";
+    addParentBtn.onclick = () => {
+      if (person.parents.length >= 2) {
+        alert("This person already has two parents.");
+        return;
+      }
+      const parentName = prompt("Enter parent's name:");
+      if (parentName && parentName.trim()) {
+        const parent = new Person(parentName.trim());
+        person.parents.push(parent);
+        parent.children.push(person);
+        renderTree();
+      } else {
+        alert("Invalid name.");
+      }
+    };
+    buttonsDiv.appendChild(addParentBtn);
+
+    // Add Child button
+    const addChildBtn = document.createElement("button");
+    addChildBtn.textContent = "Add Child";
+    addChildBtn.onclick = () => {
+      const childName = prompt("Enter child's name:");
+      if (childName && childName.trim()) {
+        const child = new Person(childName.trim());
+        person.children.push(child);
+        child.parents.push(person);
+        renderTree();
+      } else {
+        alert("Invalid name.");
+      }
+    };
+    buttonsDiv.appendChild(addChildBtn);
+
+    li.appendChild(buttonsDiv);
+
+    // Show parents as a simple list of names (no recursion to avoid loops)
+    if (person.parents.length > 0) {
+      const parentsDiv = document.createElement("div");
+      parentsDiv.style.marginTop = "6px";
+      parentsDiv.style.fontStyle = "italic";
+      parentsDiv.textContent = "Parents: " + person.parents.map(p => p.name).join(", ");
+      li.appendChild(parentsDiv);
+    }
+
+    // Show children recursively
+    if (person.children.length > 0) {
+      const childrenUl = document.createElement("ul");
+      childrenUl.className = "tree";
+      for (const child of person.children) {
+        childrenUl.appendChild(createPersonElement(child, visited));
+      }
+      li.appendChild(childrenUl);
+    }
+
+    return li;
+  }
+
+  const rootUl = document.createElement("ul");
+  rootUl.className = "tree";
+  rootUl.appendChild(createPersonElement(rootPerson));
+  treeContainer.appendChild(rootUl);
+}
+
+// Initial render
+renderTree();
+
+</script>
 </body>
 </html>
