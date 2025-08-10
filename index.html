@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Family Tree App</title>
+<title>Vertical Family Tree</title>
 <style>
   body {
     font-family: Arial, sans-serif;
     padding: 20px;
-    max-width: 600px;
+    max-width: 800px;
     margin: auto;
     background: #f9f9f9;
     color: #333;
@@ -16,32 +16,36 @@
   h1 {
     text-align: center;
   }
-  ul.tree {
-    list-style-type: none;
-    padding-left: 20px;
-    border-left: 2px solid #ccc;
+  /* Container for the tree */
+  #tree-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
   }
-  ul.tree ul.tree {
-    margin-left: 20px;
-    border-left: 2px solid #999;
+  /* Vertical tree wrapper */
+  .tree-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
-  .person {
-    margin: 10px 0;
-    padding: 5px 10px;
-    border: 1px solid #aaa;
-    border-radius: 5px;
+  /* Each person box */
+  .person-box {
     background: #fff;
+    border: 1px solid #007BFF;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin: 10px 0;
+    min-width: 120px;
+    text-align: center;
     position: relative;
   }
-  .person:hover {
-    background-color: #e6f0ff;
-  }
+  /* Buttons below each person */
   .buttons {
-    margin-top: 6px;
+    margin-top: 8px;
   }
   button {
-    margin-right: 6px;
-    padding: 4px 8px;
+    margin: 0 5px;
+    padding: 5px 10px;
     font-size: 0.9em;
     cursor: pointer;
     border-radius: 4px;
@@ -53,10 +57,39 @@
   button:hover {
     background-color: #0056b3;
   }
+  /* Connector lines between generations */
+  .children-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    position: relative;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  /* Horizontal line connecting children boxes */
+  .children-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 10px;
+    right: 10px;
+    height: 2px;
+    background: #007BFF;
+  }
+  /* Vertical line connecting parent box to horizontal line */
+  .connector {
+    position: absolute;
+    top: -10px;
+    width: 2px;
+    height: 10px;
+    background: #007BFF;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 </style>
 </head>
 <body>
-  <h1>My Family Tree</h1>
+  <h1>Vertical Family Tree</h1>
   <div id="tree-container"></div>
 
 <script>
@@ -69,34 +102,34 @@ class Person {
   }
 }
 
-// The root person ("You")
 const rootPerson = new Person("You");
-
-// Get the container div
 const treeContainer = document.getElementById("tree-container");
 
-// Function to render the family tree
+// Render tree vertically (parents above children)
 function renderTree() {
-  // Clear container
   treeContainer.innerHTML = "";
 
-  // Helper function to create person element recursively
-  function createPersonElement(person, visited = new Set()) {
-    // Detect circular references to prevent infinite loops
+  function createPersonNode(person, visited = new Set()) {
     if (visited.has(person)) {
-      const li = document.createElement("li");
-      li.textContent = person.name + " (already shown)";
-      return li;
+      // Avoid infinite loops
+      const div = document.createElement("div");
+      div.className = "person-box";
+      div.textContent = person.name + " (shown)";
+      return div;
     }
     visited.add(person);
 
-    const li = document.createElement("li");
-    li.className = "person";
+    const container = document.createElement("div");
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.alignItems = "center";
 
-    const nameSpan = document.createElement("span");
-    nameSpan.textContent = person.name;
-    li.appendChild(nameSpan);
+    // Person box
+    const personBox = document.createElement("div");
+    personBox.className = "person-box";
+    personBox.textContent = person.name;
 
+    // Buttons container
     const buttonsDiv = document.createElement("div");
     buttonsDiv.className = "buttons";
 
@@ -136,39 +169,46 @@ function renderTree() {
     };
     buttonsDiv.appendChild(addChildBtn);
 
-    li.appendChild(buttonsDiv);
+    personBox.appendChild(buttonsDiv);
+    container.appendChild(personBox);
 
-    // Show parents as a simple list of names (no recursion to avoid loops)
+    // Show parents above person (names only)
     if (person.parents.length > 0) {
       const parentsDiv = document.createElement("div");
-      parentsDiv.style.marginTop = "6px";
+      parentsDiv.style.marginBottom = "10px";
       parentsDiv.style.fontStyle = "italic";
       parentsDiv.textContent = "Parents: " + person.parents.map(p => p.name).join(", ");
-      li.appendChild(parentsDiv);
+      container.insertBefore(parentsDiv, personBox);
     }
 
-    // Show children recursively
+    // Show children below person
     if (person.children.length > 0) {
-      const childrenUl = document.createElement("ul");
-      childrenUl.className = "tree";
+      const childrenContainer = document.createElement("div");
+      childrenContainer.className = "children-container";
+
       for (const child of person.children) {
-        childrenUl.appendChild(createPersonElement(child, visited));
+        const childNode = createPersonNode(child, visited);
+        childNode.style.margin = "0 10px";
+        childrenContainer.appendChild(childNode);
+
+        // Add vertical connector line from parent box to horizontal line
+        const connectorLine = document.createElement("div");
+        connectorLine.className = "connector";
+        childNode.style.position = "relative";
+        childNode.appendChild(connectorLine);
       }
-      li.appendChild(childrenUl);
+      container.appendChild(childrenContainer);
     }
 
-    return li;
+    return container;
   }
 
-  const rootUl = document.createElement("ul");
-  rootUl.className = "tree";
-  rootUl.appendChild(createPersonElement(rootPerson));
-  treeContainer.appendChild(rootUl);
+  const rootNode = createPersonNode(rootPerson);
+  rootNode.classList.add("tree-vertical");
+  treeContainer.appendChild(rootNode);
 }
 
-// Initial render
 renderTree();
-
 </script>
 </body>
 </html>
