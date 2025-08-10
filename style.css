@@ -1,0 +1,56 @@
+body {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+  background: #f9f9f9;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+}
+
+ul.tree {
+  list-style-type: none;
+  padding-left: 20px;
+  border-left: 2px solid #ccc;
+}
+
+ul.tree ul.tree {
+  margin-left: 20px;
+  border-left: 2px solid #999;
+}
+
+.person {
+  margin: 10px 0;
+  padding: 5px 10px;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  background: #fff;
+  position: relative;
+}
+
+.person:hover {
+  background-color: #e6f0ff;
+}
+
+.buttons {
+  margin-top: 6px;
+}
+
+button {
+  margin-right: 6px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid #007BFF;
+  background-color: #007BFF;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
